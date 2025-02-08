@@ -6,7 +6,7 @@ from aiogram.types import Message
 from aiogram.utils import executor
 from dotenv import load_dotenv
 
-# Загружаем переменные окружения из .env
+# Загружаем переменные окружения
 load_dotenv()
 BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
 DEEPSEEK_API_KEY = os.getenv("DEEPSEEK_API_KEY")
@@ -18,26 +18,26 @@ user_scores = {}
 bot = Bot(token=BOT_TOKEN)
 dp = Dispatcher(bot)
 
-### 🏆 ФУНКЦИЯ АНАЛИЗА ЧЕРЕЗ DEEPSEEK ###
+### 🏆 ФУНКЦИЯ АНАЛИЗА ЧЕРЕЗ DEEPSEEK (RAPIDAPI) ###
 def analyze_with_deepseek(text):
-    url = "https://api.deepseek.com/v1/chat/completions"
+    url = "https://deepseek-r1.p.rapidapi.com"
     headers = {
-        "Authorization": f"Bearer {DEEPSEEK_API_KEY}",
+        "X-RapidAPI-Key": DEEPSEEK_API_KEY,
+        "X-RapidAPI-Host": "deepseek-r1.p.rapidapi.com",
         "Content-Type": "application/json"
     }
     payload = {
-        "model": "deepseek-chat",
-        "messages": [{"role": "system", "content": "Ты судья в споре. Ответь, кто прав."},
-                     {"role": "user", "content": text}],
-        "temperature": 0.7
+        "model": "deepseek-r1",
+        "messages": [{"role": "user", "content": text}]
     }
 
     response = requests.post(url, headers=headers, json=payload)
+    
     if response.status_code == 200:
         data = response.json()
-        return data["choices"][0]["message"]["content"]
+        return data.get("choices", [{}])[0].get("message", {}).get("content", "Ошибка в ответе")
     else:
-        return "Ошибка в DeepSeek API"
+        return f"Ошибка API: {response.status_code}, {response.text}"
 
 ### 👀 КОМАНДА /who ДЛЯ СУДА В ЧАТЕ ###
 @dp.message_handler(commands=['who'])
